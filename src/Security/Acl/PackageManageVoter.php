@@ -6,12 +6,18 @@ namespace Packeton\Security\Acl;
 
 use Packeton\Entity\Package;
 use Packeton\Entity\User;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\CacheableVoterInterface;
 
 class PackageManageVoter implements CacheableVoterInterface
 {
     public const MANAGE = 'MANAGE';
+
+    public function __construct(
+        private readonly ParameterBagInterface $parameterBag,
+    ) {
+    }
 
     /**
      * {@inheritdoc}
@@ -29,6 +35,10 @@ class PackageManageVoter implements CacheableVoterInterface
 
         if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             return self::ACCESS_GRANTED;
+        }
+
+        if (!$this->parameterBag->get('packeton.allow_maintainer_group_creation')) {
+            return self::ACCESS_DENIED;
         }
 
         /** @var Package $package */

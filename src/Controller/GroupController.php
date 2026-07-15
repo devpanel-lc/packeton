@@ -30,8 +30,10 @@ class GroupController extends AbstractController
     #[Route('/groups', name: 'groups_index')]
     public function indexAction(Request $request): Response
     {
-        if (!$this->isGranted('ROLE_ADMIN') && !$this->isGranted('ROLE_MAINTAINER')) {
-            throw $this->createAccessDeniedException();
+        if (!$this->isGranted('ROLE_ADMIN')) {
+            if (!$this->isGranted('ROLE_MAINTAINER') || !$this->parameterBag->get('packeton.allow_maintainer_group_creation')) {
+                throw $this->createAccessDeniedException();
+            }
         }
 
         $page = $request->query->get('page', 1);
@@ -60,6 +62,7 @@ class GroupController extends AbstractController
         return $this->render('group/index.html.twig', [
             'groups' => $paginator,
             'searchGroup' => $searchGroup,
+            'allowMaintainerGroupCreation' => $this->parameterBag->get('packeton.allow_maintainer_group_creation'),
         ]);
     }
 
@@ -83,7 +86,7 @@ class GroupController extends AbstractController
             $group->addOwner($user);
         }
 
-        $data = $this->handleUpdate($request, $group, 'Group has been saved successfully');
+        $data = $this->handleUpdate($request, $group, 'Group has been saved successfully', isAdmin: $this->isGranted('ROLE_ADMIN'));
 
         return $data instanceof Response ? $data : $this->render('group/update.html.twig', $data);
     }
@@ -91,9 +94,13 @@ class GroupController extends AbstractController
     #[Route('/groups/{id}/update', name: 'groups_update')]
     public function updateAction(Request $request, #[Vars] Group $group): Response
     {
+        if (!$this->isGranted('ROLE_ADMIN') && !$this->parameterBag->get('packeton.allow_maintainer_group_creation')) {
+            throw $this->createAccessDeniedException();
+        }
+
         $this->denyAccessUnlessGranted(GroupOwnerVoter::EDIT, $group);
 
-        $data = $this->handleUpdate($request, $group, 'Group has been saved successfully');
+        $data = $this->handleUpdate($request, $group, 'Group has been saved successfully', isAdmin: $this->isGranted('ROLE_ADMIN'));
 
         return $data instanceof Response ? $data : $this->render('group/update.html.twig', $data);
     }
@@ -114,9 +121,9 @@ class GroupController extends AbstractController
         return $this->redirect($this->generateUrl("groups_index"));
     }
 
-    protected function handleUpdate(Request $request, Group $group, $flashMessage)
+    protected function handleUpdate(Request $request, Group $group, $flashMessage, bool $isAdmin = true)
     {
-        $form = $this->createForm(GroupType::class, $group);
+        $form = $this->createForm(GroupType::class, $group, ['is_admin' => $isAdmin]);
         if ($request->getMethod() === 'POST') {
             $form->handleRequest($request);
             if ($form->isSubmitted() && $form->isValid()) {
