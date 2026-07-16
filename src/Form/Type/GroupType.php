@@ -86,6 +86,9 @@ class GroupType extends AbstractType
                     }
                 }
             }
+            foreach ($user->getPackages() as $package) {
+                $ownedPackageIds[] = $package->getId();
+            }
             $aclPermissionOptions['allowed_packages'] = array_values(array_unique($ownedPackageIds));
         }
 

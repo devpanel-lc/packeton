@@ -72,6 +72,7 @@ security:
         # Maintainers
         - { path: (^(/users/(.+)/packages))+, roles: ROLE_MAINTAINER }
         - { path: (^(/users/(.+)/favorites))+, roles: ROLE_MAINTAINER }
+        - { path: ^/users/sshkey, roles: ROLE_MAINTAINER }
         - { path: (^(/metadata/changes.json$|/explore|/jobs/|/archive/|/api/hooks/))+, roles: ROLE_MAINTAINER }
 
         # Groups (maintainer access)
