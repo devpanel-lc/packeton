@@ -1150,7 +1150,7 @@ class PackageController extends AbstractController
     private function canEditPackage(Package $package): bool
     {
         return $this->isGranted('ROLE_EDIT_PACKAGES')
-            || $package->getMaintainers()->contains($this->getUser())
+            || $package->getMaintainers()?->contains($this->getUser())
             || $this->isGranted(PackageManageVoter::MANAGE, $package);
     }
 
